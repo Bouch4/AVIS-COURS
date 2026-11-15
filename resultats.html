@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Résultats des avis</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="google" content="notranslate">
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --line:#e2e0da; --text:#16181d; --muted:#5d6370; --accent:#e8501a; --bar:#2b303b; --grey:#b9bcc4; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 18px 60px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  #login { max-width: 380px; margin: 60px auto; }
+  input[type=password], select { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--text); }
+  input[type=password] { width: 100%; margin: 10px 0; }
+  button { font: inherit; padding: 10px 16px; border: 0; border-radius: 10px; background: var(--text); color: #fff; cursor: pointer; }
+  button.alt { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  .err { color: #b3261e; min-height: 1.3em; font-size: .9rem; }
+  .top { display:flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters { display:flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .kpi .v { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+  .kpi .l { color: var(--muted); font-size: .85rem; margin-top: 2px; }
+  .grid2 { display:grid; grid-template-columns: repeat(auto-fit, minmax(420px,1fr)); gap: 16px; }
+  @media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
+  .row { display:grid; grid-template-columns: 150px 1fr 74px; gap: 10px; align-items:center; margin: 7px 0; font-size:.92rem; }
+  .row .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .track { height: 14px; background: #eceae4; border-radius: 7px; overflow: hidden; }
+  .fill { height: 100%; background: var(--bar); border-radius: 7px; }
+  .fill.low { background: var(--grey); }
+  .val { text-align:right; font-variant-numeric: tabular-nums; }
+  .val small { color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  th, td { padding: 7px 8px; text-align:center; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align:left; }
+  th { color: var(--muted); font-weight: 600; font-size:.8rem; }
+  .tablewrap { overflow-x:auto; }
+  svg text { font-family: inherit; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+
+<div id="login" class="card">
+  <h1>Résultats des avis</h1>
+  <p class="muted">Accès réservé à l'équipe de direction.</p>
+  <input type="password" id="code" placeholder="Code d'accès" autocomplete="current-password">
+  <label class="muted"><input type="checkbox" id="rester"> Rester connecté sur cet appareil</label>
+  <p class="err" id="err"></p>
+  <button id="go">Voir les résultats</button>
+</div>
+
+<div id="app" hidden>
+  <div class="top">
+    <div>
+      <h1>Résultats des avis</h1>
+      <div class="muted" id="maj"></div>
+    </div>
+    <div>
+      <button class="alt" id="refresh">Actualiser</button>
+      <button class="alt" id="quit">Se déconnecter</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <select id="f-periode" aria-label="Période">
+      <option value="7">7 derniers jours</option>
+      <option value="30" selected>30 derniers jours</option>
+      <option value="90">90 derniers jours</option>
+      <option value="0">Tout</option>
+    </select>
+    <select id="f-jour" aria-label="Jour"><option value="">Tous les jours</option></select>
+    <select id="f-cours" aria-label="Cours"><option value="">Tous les cours</option></select>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid2">
+    <div class="card"><h2>Moyenne par critère</h2><div id="c-criteres"></div></div>
+    <div class="card"><h2>Moyenne par jour</h2><div id="c-jours"></div></div>
+  </div>
+
+  <div class="card"><h2>Évolution semaine par semaine</h2><div id="c-evol"></div></div>
+  <div class="card"><h2>Moyenne par cours</h2><div id="c-cours"></div></div>
+  <div class="card"><h2>Détail par créneau</h2><div class="tablewrap" id="c-creneaux"></div></div>
+  <p class="muted">Les notes vont de 1 à 5 (les barres partent de 1). En gris : moins de 3 avis, à prendre avec prudence.</p>
+</div>
+
+</main>
+<script>
+// Même adresse /exec que dans index.html (ligne ENDPOINT)
+const ENDPOINT = "https://script.google.com/macros/s/VOTRE_ID/exec";
+const MIN_AVIS = 3;
+const JOURS = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+const CRITERES = [["Accueil et présence",4],["Coaching",5],["Ambiance",6],["Cadre et organisation",7]];
+
+let votes = [], code = "", timer = null;
+const $ = (id) => document.getElementById(id);
+const f1 = (x) => x.toFixed(1).replace(".", ",");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function lire(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+function ecrire(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} }
+
+async function charger() {
+  const r = await fetch(ENDPOINT + "?code=" + encodeURIComponent(code), { cache: "no-store" });
+  const d = await r.json();
+  if (!d.ok) throw new Error("code");
+  votes = d.votes;
+  $("maj").textContent = "Mis à jour à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " · " + votes.length + " avis au total";
+}
+
+async function connecter() {
+  $("err").textContent = "";
+  code = $("code").value.trim();
+  if (!code) return;
+  $("go").disabled = true;
+  try {
+    await charger();
+    ecrire("code", $("rester").checked ? code : "");
+    $("login").hidden = true; $("app").hidden = false;
+    remplirFiltres(); afficher();
+    clearInterval(timer); timer = setInterval(rafraichir, 60000);
+  } catch (e) {
+    $("err").textContent = e.message === "code" ? "Code incorrect." : "Impossible de joindre le service. Vérifie l'adresse ENDPOINT et le déploiement.";
+  }
+  $("go").disabled = false;
+}
+
+async function rafraichir() { try { await charger(); afficher(); } catch (e) {} }
+
+function remplirFiltres() {
+  const cours = [...new Set(votes.map((v) => v[3]))].sort();
+  const sel = $("f-cours"), cur = sel.value;
+  sel.innerHTML = '<option value="">Tous les cours</option>' + cours.map((c) => `<option>${esc(c)}</option>`).join("");
+  sel.value = cours.includes(cur) ? cur : "";
+  const sj = $("f-jour");
+  sj.innerHTML = '<option value="">Tous les jours</option>' + JOURS.map((j) => `<option value="${j}">${j[0].toUpperCase() + j.slice(1)}</option>`).join("");
+}
+
+function filtrer() {
+  const p = Number($("f-periode").value), j = $("f-jour").value, c = $("f-cours").value;
+  let debut = "";
+  if (p) { const d = new Date(); d.setDate(d.getDate() - p); debut = d.toISOString().slice(0, 10); }
+  return votes.filter((v) => (!debut || v[0] >= debut) && (!j || v[1] === j) && (!c || v[3] === c));
+}
+
+function moyenne(rows, i) { return rows.reduce((a, v) => a + v[i], 0) / rows.length; }
+function moyGlobale(rows) { return rows.reduce((a, v) => a + (v[4] + v[5] + v[6] + v[7]) / 4, 0) / rows.length; }
+function groupe(rows, cle) { const g = {}; rows.forEach((v) => (g[cle(v)] = g[cle(v)] || []).push(v)); return g; }
+
+function barre(nom, val, n, titre) {
+  const low = n < MIN_AVIS ? " low" : "";
+  return `<div class="row" title="${esc(titre || nom)}"><div class="nm">${esc(nom)}</div>` +
+    `<div class="track"><div class="fill${low}" style="width:${((val - 1) / 4 * 100).toFixed(1)}%"></div></div>` +
+    `<div class="val"><b>${f1(val)}</b> <small>(${n})</small></div></div>`;
+}
+
+function couleurNote(x) {
+  const t = Math.max(0, Math.min(1, (x - 2) / 3)); // 2 -> rouge, 5 -> vert
+  const h = 8 + t * 112, l = 90 - t * 10;
+  return `hsl(${h.toFixed(0)} 70% ${l.toFixed(0)}%)`;
+}
+
+function afficher() {
+  const rows = filtrer();
+  const vide = '<p class="muted">Aucun avis sur cette sélection.</p>';
+  if (!rows.length) {
+    $("kpis").innerHTML = ""; ["c-criteres","c-jours","c-evol","c-cours","c-creneaux"].forEach((id) => $(id).innerHTML = vide);
+    return;
+  }
+
+  // Indicateurs
+  const crit = CRITERES.map(([nom, i]) => [nom, moyenne(rows, i)]);
+  const best = crit.slice().sort((a, b) => b[1] - a[1])[0], worst = crit.slice().sort((a, b) => a[1] - b[1])[0];
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const nbAuj = rows.filter((v) => v[0] === aujourdhui).length;
+  $("kpis").innerHTML =
+    kpi(f1(moyGlobale(rows)) + " / 5", "Moyenne générale") +
+    kpi(rows.length, "Avis sur la période (" + nbAuj + " aujourd'hui)") +
+    kpi(esc(best[0]) + " " + f1(best[1]), "Point fort") +
+    kpi(esc(worst[0]) + " " + f1(worst[1]), "À surveiller");
+
+  // Par critère
+  $("c-criteres").innerHTML = crit.map(([nom, v]) => barre(nom, v, rows.length)).join("");
+
+  // Par jour
+  const gj = groupe(rows, (v) => v[1]);
+  $("c-jours").innerHTML = JOURS.filter((j) => gj[j]).map((j) => barre(j[0].toUpperCase() + j.slice(1), moyGlobale(gj[j]), gj[j].length)).join("") || vide;
+
+  // Par cours
+  const gc = groupe(rows, (v) => v[3]);
+  $("c-cours").innerHTML = Object.keys(gc).map((c) => [c, moyGlobale(gc[c]), gc[c].length])
+    .sort((a, b) => b[1] - a[1]).map(([c, m, n]) => barre(c, m, n)).join("");
+
+  // Évolution par semaine
+  evolution(rows);
+
+  // Par créneau
+  const gcr = groupe(rows, (v) => v[1] + "|" + v[2] + "|" + v[3]);
+  const ordreJ = (j) => JOURS.indexOf(j);
+  const cles = Object.keys(gcr).sort((a, b) => {
+    const [ja, ha] = a.split("|"), [jb, hb] = b.split("|");
+    return ordreJ(ja) - ordreJ(jb) || ha.localeCompare(hb);
+  });
+  $("c-creneaux").innerHTML = "<table><tr><th>Créneau</th><th>Avis</th><th>Moyenne</th>" +
+    CRITERES.map((c) => `<th>${esc(c[0])}</th>`).join("") + "</tr>" +
+    cles.map((k) => {
+      const g = gcr[k], [j, h, c] = k.split("|"), low = g.length < MIN_AVIS;
+      const cell = (x) => `<td style="background:${low ? "#eee" : couleurNote(x)}">${f1(x)}</td>`;
+      return `<tr><td>${j.slice(0, 3)}. ${esc(h)} ${esc(c)}</td><td>${g.length}</td>${cell(moyGlobale(g))}` +
+        CRITERES.map(([, i]) => cell(moyenne(g, i))).join("") + "</tr>";
+    }).join("") + "</table>";
+}
+
+function kpi(v, l) { return `<div class="kpi"><div class="v" style="${String(v).length > 14 ? "font-size:1.15rem" : ""}">${v}</div><div class="l">${l}</div></div>`; }
+
+function lundi(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+function evolution(rows) {
+  const gs = groupe(rows, (v) => lundi(v[0]));
+  const sem = Object.keys(gs).sort().slice(-12);
+  if (sem.length < 2) { $("c-evol").innerHTML = '<p class="muted">Il faut au moins deux semaines de données pour tracer une courbe.</p>'; return; }
+  const W = 960, H = 220, mg = { l: 36, r: 14, t: 14, b: 30 };
+  const x = (i) => mg.l + i * (W - mg.l - mg.r) / (sem.length - 1);
+  const y = (v) => mg.t + (5 - v) / 4 * (H - mg.t - mg.b); // échelle 1 à 5
+  const pts = sem.map((s, i) => [x(i), y(moyGlobale(gs[s])), gs[s].length, s]);
+  let g = "";
+  for (let v = 1; v <= 5; v++) g += `<line x1="${mg.l}" x2="${W - mg.r}" y1="${y(v)}" y2="${y(v)}" stroke="#e2e0da"/><text x="${mg.l - 8}" y="${y(v) + 4}" font-size="11" text-anchor="end" fill="#5d6370">${v}</text>`;
+  const ligne = pts.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+  const pastilles = pts.map((p) => `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="${p[2] < MIN_AVIS ? "#b9bcc4" : "#e8501a"}"><title>Semaine du ${p[3].split("-").reverse().join("/")} : ${f1(5 - (p[1] - mg.t) / (H - mg.t - mg.b) * 4)} (${p[2]} avis)</title></circle>` +
+    `<text x="${p[0]}" y="${H - 8}" font-size="11" text-anchor="middle" fill="#5d6370">${p[3].slice(8)}/${p[3].slice(5, 7)}</text>`).join("");
+  $("c-evol").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Moyenne générale par semaine">${g}<polyline points="${ligne}" fill="none" stroke="#2b303b" stroke-width="2.5"/>${pastilles}</svg>` +
+    '<p class="muted">Chaque point est la moyenne d\'une semaine (date = lundi). Gris : moins de 3 avis.</p>';
+}
+
+$("go").addEventListener("click", connecter);
+$("code").addEventListener("keydown", (e) => { if (e.key === "Enter") connecter(); });
+$("refresh").addEventListener("click", rafraichir);
+["f-periode","f-jour","f-cours"].forEach((id) => $(id).addEventListener("change", afficher));
+$("quit").addEventListener("click", () => { ecrire("code", ""); clearInterval(timer); location.reload(); });
+
+const memo = lire("code");
+if (memo) { $("code").value = memo; $("rester").checked = true; connecter(); }
+</script>
+</body>
+</html>
