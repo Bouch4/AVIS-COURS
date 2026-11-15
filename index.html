@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ton avis sur le cours</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #181b22;
+    --line: #2a2f3a;
+    --text: #f2f4f8;
+    --muted: #9aa3b2;
+    --accent: #ff5a1f;
+    --accent-soft: rgba(255, 90, 31, .16);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 18px 48px; }
+  h1 { font-size: 1.6rem; margin: 8px 0 4px; letter-spacing: .2px; }
+  .intro { color: var(--muted); margin: 0 0 24px; line-height: 1.45; }
+  .anon { display: inline-block; font-size: .85rem; color: var(--accent);
+    background: var(--accent-soft); padding: 4px 10px; border-radius: 99px; margin-bottom: 10px; }
+  section.block { background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+  h2 { font-size: 1.05rem; margin: 0 0 2px; }
+  .sub { color: var(--muted); font-size: .88rem; margin: 0 0 14px; line-height: 1.35; }
+  .slots { display: flex; flex-wrap: wrap; gap: 8px; }
+  .slot { appearance: none; border: 1px solid var(--line); background: transparent;
+    color: var(--text); padding: 12px 18px; border-radius: 12px; font-size: 1.05rem; cursor: pointer; }
+  .slot { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 96px; }
+  .slot .t { font-size: 1.15rem; font-weight: 700; }
+  .slot .n { font-size: .8rem; color: var(--muted); }
+  .slot[aria-pressed="true"] .n { color: #fff; }
+  .slot[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .faces { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .face { appearance: none; border: 2px solid var(--line); background: transparent;
+    border-radius: 14px; padding: 8px 0 6px; cursor: pointer; color: var(--muted);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    opacity: .8; transition: transform .12s, opacity .12s, background .12s, border-color .12s; }
+  .face .emo { font-size: 2.3rem; line-height: 1; }
+  .face .lbl { font-size: .68rem; color: var(--c); font-weight: 600; }
+  .face:active { transform: scale(.94); }
+  .face[aria-pressed="true"] { opacity: 1; border-color: var(--c);
+    background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--text); transform: scale(1.08); }
+  .faces.has-choice .face[aria-pressed="false"] { opacity: .4; }
+  #send { width: 100%; margin-top: 8px; padding: 16px; border: 0; border-radius: 14px;
+    background: var(--accent); color: #fff; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+  #send:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+  #err { color: #ff8a80; text-align: center; min-height: 1.3em; margin: 10px 0 0; font-size: .92rem; }
+  #thanks { display: none; text-align: center; padding: 60px 10px; }
+  #thanks .big { font-size: 4rem; }
+  #thanks h2 { font-size: 1.5rem; margin: 12px 0; }
+  #thanks p { color: var(--muted); }
+  #again { margin-top: 18px; padding: 12px 22px; border-radius: 12px; border: 1px solid var(--line);
+    background: transparent; color: var(--text); font-size: 1rem; cursor: pointer; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  #confirm { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    align-items: center; justify-content: center; padding: 20px; z-index: 10; }
+  #confirm.open { display: flex; }
+  #confirm .box { background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 26px 22px; max-width: 380px; width: 100%; text-align: center; }
+  #confirm .big { font-size: 2.6rem; font-weight: 800; color: var(--accent); margin: 6px 0 10px; }
+  #confirm .cn { font-size: 1.5rem; margin-top: 2px; }
+  #confirm p { margin: 0; color: var(--muted); line-height: 1.4; }
+  #confirm .btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  #confirm button { padding: 15px; border-radius: 13px; font-size: 1.05rem; cursor: pointer; border: 1px solid var(--line);
+    background: transparent; color: var(--text); }
+  #confirm #yes { background: var(--accent); border-color: var(--accent); font-weight: 700; color: #fff; }
+  #testbanner { display: none; background: #3a2d00; color: #ffd45c; text-align: center;
+    padding: 6px; font-size: .8rem; }
+  @media (min-width: 700px) {
+    main { padding-top: 40px; }
+    .face .emo { font-size: 2.8rem; }
+    .face .lbl { font-size: .78rem; }
+  }
+</style>
+</head>
+<body>
+<div id="testbanner">MODE TEST : aucun envoi réel (renseigner ENDPOINT dans le code)</div>
+<div id="confirm" role="dialog" aria-modal="true" aria-labelledby="cq">
+  <div class="box">
+    <p id="cq">Tu confirmes que tu viens de faire le cours de</p>
+    <div class="big" id="cslot"></div>
+    <p>C'est bien ce cours-là que tu évalues ?</p>
+    <div class="btns">
+      <button id="yes" type="button">Oui, c'est bien celui-là</button>
+      <button id="no" type="button">Non, je change</button>
+    </div>
+  </div>
+</div>
+<main>
+  <div id="form">
+    <span class="anon">🔒 100 % anonyme</span>
+    <h1>Ton avis sur le cours</h1>
+    <p class="intro">Ça prend 15 secondes. On ne note ni la séance ni une personne : on veut simplement améliorer le service que l'on te propose.</p>
+
+    <section class="block">
+      <h2>Quel cours viens-tu de faire ?</h2>
+      <p class="sub">Choisis le cours que tu as fait <strong>aujourd'hui</strong>. Les avis ne portent que sur les cours du jour, pas sur ceux de la veille.</p>
+      <div class="slots" id="slots" role="group" aria-label="Créneau"></div>
+    </section>
+
+    <div id="criteria"></div>
+
+    <!-- Anti-spam : champ invisible que seuls les robots remplissent -->
+    <div class="hp" aria-hidden="true"><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
+
+    <button id="send" disabled>Envoyer mon avis</button>
+    <p id="err" role="alert"></p>
+  </div>
+
+  <div id="thanks">
+    <div class="big">🙌</div>
+    <h2>Merci !</h2>
+    <p>Ton avis nous aide à améliorer les cours.</p>
+    <button id="again">Nouvel avis</button>
+  </div>
+</main>
+
+<script>
+/* ==================== CONFIGURATION ==================== */
+
+// 1) Adresse du script Google (Apps Script) qui range les avis dans ton Google Sheet.
+//    Format : https://script.google.com/macros/s/XXXXXXXX/exec
+//    Tant qu'elle contient "VOTRE_ID", la page tourne en mode test (rien n'est envoyé).
+const ENDPOINT = "https://script.google.com/macros/s/VOTRE_ID/exec";
+
+// 2) Planning de la semaine : [heure, nom du cours] (sans prénom de coach).
+//    La page affiche automatiquement les cours du jour (d'après la date de l'appareil).
+//    Si le planning change, il suffit de modifier les lignes ci-dessous.
+const SCHEDULE = {
+  lundi: [
+    ["07:00", "WOD"], ["09:15", "WOD"], ["10:30", "HYBRID"], ["12:15", "WOD"],
+    ["16:45", "HYROX"], ["17:30", "WOD"], ["18:00", "FUNCTIONAL BODY"],
+    ["18:45", "WOD"], ["19:15", "ENGINE"], ["20:00", "WOD"]
+  ],
+  mardi: [
+    ["07:00", "WOD"], ["09:15", "HYROX"], ["10:30", "WOD"], ["12:15", "WOD"],
+    ["16:45", "WOD"], ["17:30", "HYROX"], ["18:00", "WOD"],
+    ["18:45", "HYBRID"], ["19:15", "HALTÉROPHILIE"], ["20:00", "WOD"]
+  ],
+  mercredi: [
+    ["07:00", "WOD"], ["09:15", "WOD"], ["12:15", "WOD"],
+    ["16:45", "TEENS"], ["17:30", "WOD"], ["18:00", "STRONG FUNCTIONAL"],
+    ["18:45", "WOD"], ["19:15", "HYROX"], ["20:00", "WOD"]
+  ],
+  jeudi: [
+    ["07:00", "WOD"], ["09:15", "HYBRID TRAINING"], ["10:30", "WOD"], ["12:15", "HYROX"],
+    ["16:45", "WOD"], ["17:30", "ENGINE"], ["18:00", "WOD"],
+    ["18:45", "GYM"], ["19:15", "WOD"], ["20:00", "HYROX"]
+  ],
+  vendredi: [
+    ["07:00", "WOD"], ["09:15", "WOD"], ["10:30", "HYROX"], ["12:15", "WOD"],
+    ["16:45", "WOD"], ["17:30", "HYBRID"], ["18:00", "WOD"],
+    ["18:45", "PRE TEENS"], ["19:15", "WOD"], ["20:00", "TEENS"]
+  ],
+  samedi: [
+    ["09:15", "WOD TEAM"], ["10:30", "WOD TEAM"], ["11:45", "HYROX"]
+  ],
+  dimanche: []
+};
+// Pour tester un autre jour : ajouter ?jour=mardi à l'adresse de la page.
+
+// 3) Critères notés (id = nom du champ reçu par mail)
+const CRITERIA = [
+  { id: "accueil_presence", title: "Accueil et présence",
+    sub: "Coach accueillant, présent et dynamique" },
+  { id: "coaching", title: "Coaching",
+    sub: "Consignes claires, conseils utiles, séance adaptée à mon niveau, sécurité" },
+  { id: "ambiance", title: "Ambiance",
+    sub: "Énergie du groupe, convivialité" },
+  { id: "organisation", title: "Organisation",
+    sub: "Cours à l'heure, matériel prêt et propre" }
+];
+
+// 4) Retour automatique à l'écran de départ après envoi (utile sur la tablette), en secondes
+const RESET_AFTER = 6;
+
+/* ======================================================== */
+
+const FACES = [
+  { v: 1, emo: "😞", lbl: "Décevant", color: "#ef4444" },
+  { v: 2, emo: "🙁", lbl: "Bof",       color: "#f97316" },
+  { v: 3, emo: "😐", lbl: "Correct",   color: "#eab308" },
+  { v: 4, emo: "🙂", lbl: "Bien",      color: "#84cc16" },
+  { v: 5, emo: "😍", lbl: "Top",       color: "#22c55e" }
+];
+
+const state = { slot: null, ratings: {} };
+const $ = (s) => document.querySelector(s);
+let resetTimer = null;
+
+if (ENDPOINT.includes("VOTRE_ID")) $("#testbanner").style.display = "block";
+
+// Jour (d'après l'appareil, ou ?jour=... pour tester)
+const DAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const asked = (new URLSearchParams(location.search).get("jour") || "").toLowerCase();
+const TODAY = DAYS.includes(asked) ? asked : DAYS[new Date().getDay()];
+const todays = SCHEDULE[TODAY] || [];
+
+// Créneaux
+if (!todays.length) {
+  $("#slots").innerHTML = '<p class="sub" style="margin:0">Pas de cours au planning aujourd\'hui. Les avis ne peuvent être donnés que sur les cours du jour : à bientôt à la box !</p>';
+}
+todays.forEach(([time, name]) => {
+  const label = `${time} · ${name}`;
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "slot";
+  b.innerHTML = `<span class="t">${time}</span><span class="n">${name}</span>`;
+  b.setAttribute("aria-pressed", "false");
+  b.onclick = () => askConfirm(label, b);
+  $("#slots").appendChild(b);
+});
+
+// Confirmation du créneau
+let pending = null;
+function askConfirm(slot, btn) {
+  pending = { slot, btn };
+  const [t, n] = slot.split(" · ");
+  $("#cslot").innerHTML = `<div>${t}</div><div class="cn">${n}</div>`;
+  $("#confirm").classList.add("open");
+}
+$("#yes").onclick = () => {
+  if (pending) {
+    state.slot = pending.slot;
+    document.querySelectorAll(".slot").forEach((x) =>
+      x.setAttribute("aria-pressed", String(x === pending.btn)));
+  }
+  pending = null;
+  $("#confirm").classList.remove("open");
+  refresh();
+};
+$("#no").onclick = () => { pending = null; $("#confirm").classList.remove("open"); };
+
+// Critères
+CRITERIA.forEach((c) => {
+  const sec = document.createElement("section");
+  sec.className = "block";
+  sec.innerHTML = `<h2>${c.title}</h2><p class="sub">${c.sub}</p><div class="faces" role="group" aria-label="${c.title}"></div>`;
+  const wrap = sec.querySelector(".faces");
+  FACES.forEach((f) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "face"; b.style.setProperty("--c", f.color);
+    b.setAttribute("aria-pressed", "false");
+    b.setAttribute("aria-label", `${c.title} : ${f.lbl}`);
+    b.innerHTML = `<span class="emo">${f.emo}</span><span class="lbl">${f.lbl}</span>`;
+    b.onclick = () => {
+      state.ratings[c.id] = f.v;
+      wrap.classList.add("has-choice");
+      wrap.querySelectorAll(".face").forEach((x) =>
+        x.setAttribute("aria-pressed", String(x === b)));
+      refresh();
+    };
+    wrap.appendChild(b);
+  });
+  $("#criteria").appendChild(sec);
+});
+
+function complete() {
+  return state.slot && CRITERIA.every((c) => state.ratings[c.id]);
+}
+function refresh() {
+  $("#send").disabled = !complete();
+  $("#err").textContent = "";
+}
+
+function reset() {
+  clearTimeout(resetTimer);
+  state.slot = null; state.ratings = {};
+  document.querySelectorAll("[aria-pressed]").forEach((x) => x.setAttribute("aria-pressed", "false"));
+  document.querySelectorAll(".faces").forEach((x) => x.classList.remove("has-choice"));
+  $("#thanks").style.display = "none";
+  $("#form").style.display = "block";
+  $("#send").disabled = true;
+  $("#send").textContent = "Envoyer mon avis";
+  window.scrollTo(0, 0);
+}
+$("#again").onclick = reset;
+
+$("#send").onclick = async () => {
+  if (!complete()) return;
+  if ($("#website").value) return; // robot détecté
+  const btn = $("#send");
+  btn.disabled = true; btn.textContent = "Envoi…"; $("#err").textContent = "";
+
+  // Aucune donnée personnelle : heure + nom du cours et 4 notes. La date est ajoutée côté Google.
+  const [heure, cours] = state.slot.split(" · ");
+  const payload = { jour: TODAY, heure, cours, ...state.ratings };
+
+  try {
+    if (ENDPOINT.includes("VOTRE_ID")) {
+      console.log("MODE TEST, envoi simulé :", payload);
+      await new Promise((r) => setTimeout(r, 400));
+    } else {
+      // text/plain + no-cors : évite les blocages du navigateur avec Google Apps Script
+      await fetch(ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+        referrerPolicy: "no-referrer",
+        credentials: "omit"
+      });
+    }
+    $("#form").style.display = "none";
+    $("#thanks").style.display = "block";
+    window.scrollTo(0, 0);
+    resetTimer = setTimeout(reset, RESET_AFTER * 1000);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Envoyer mon avis";
+    $("#err").textContent = "Oups, l'envoi n'a pas fonctionné. Réessaie dans un instant.";
+  }
+};
+</script>
+</body>
+</html>
