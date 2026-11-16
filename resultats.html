@@ -41,6 +41,23 @@
   th:first-child, td:first-child { text-align:left; }
   th { color: var(--muted); font-weight: 600; font-size:.8rem; }
   .tablewrap { overflow-x:auto; }
+  .tranches { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
+  .tr { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: #fff; }
+  .tr.best { border-color: #5aa469; box-shadow: inset 0 0 0 1px #5aa469; }
+  .tr.worst { border-color: #d9822b; box-shadow: inset 0 0 0 1px #d9822b; }
+  .tr .nm { font-weight: 700; }
+  .tr .hr { color: var(--muted); font-size: .82rem; margin-bottom: 6px; }
+  .tr .big { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+  .tr .big small { font-size: .8rem; font-weight: 500; color: var(--muted); }
+  .tr .badge { display:inline-block; font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:99px; margin-left:6px; vertical-align: middle; }
+  .badge.b { background:#e3f2e6; color:#2d6a3a; } .badge.w { background:#fbe9d6; color:#9a5412; }
+  .chips { display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0 8px; }
+  .chip { border-radius: 8px; padding: 5px 8px; font-size: .78rem; display:flex; justify-content: space-between; gap: 6px; }
+  .tr .weak { font-size: .82rem; color: var(--muted); }
+  .heat td.c { padding: 6px 4px; min-width: 76px; }
+  .heat .cn { display:block; font-size:.66rem; color:#40454f; margin-top:1px; letter-spacing:.2px; }
+  .heat .cv { font-weight: 700; }
+  .heat .cv small { font-weight: 400; color: #5d6370; }
   svg text { font-family: inherit; }
   [hidden] { display:none !important; }
 </style>
@@ -82,6 +99,9 @@
 
   <div class="kpis" id="kpis"></div>
 
+  <div class="card"><h2>Par moment de la journée</h2><div class="tranches" id="c-tranches"></div></div>
+  <div class="card"><h2>Grille jour × heure</h2><div class="tablewrap" id="c-grille"></div></div>
+
   <div class="grid2">
     <div class="card"><h2>Moyenne par critère</h2><div id="c-criteres"></div></div>
     <div class="card"><h2>Moyenne par jour</h2><div id="c-jours"></div></div>
@@ -100,6 +120,13 @@ const ENDPOINT = "https://script.google.com/macros/s/AKfycbxqDYB0IAulC3sTPBEBnpk
 const MIN_AVIS = 3;
 const JOURS = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
 const CRITERES = [["Accueil et présence",4],["Coaching",5],["Ambiance",6],["Cadre et organisation",7]];
+
+const TRANCHES = [
+  ["Matin", "7h00 – 10h30", (h) => h < "11:00"],
+  ["Midi", "12h15", (h) => h >= "11:00" && h < "14:00"],
+  ["Fin d'après-midi", "16h45 – 17h30", (h) => h >= "14:00" && h < "17:45"],
+  ["Soir", "18h00 – 20h00", (h) => h >= "17:45"]
+];
 
 let votes = [], code = "", timer = null;
 const $ = (id) => document.getElementById(id);
@@ -173,7 +200,7 @@ function afficher() {
   const rows = filtrer();
   const vide = '<p class="muted">Aucun avis sur cette sélection.</p>';
   if (!rows.length) {
-    $("kpis").innerHTML = ""; ["c-criteres","c-jours","c-evol","c-cours","c-creneaux"].forEach((id) => $(id).innerHTML = vide);
+    $("kpis").innerHTML = ""; ["c-tranches","c-grille","c-criteres","c-jours","c-evol","c-cours","c-creneaux"].forEach((id) => $(id).innerHTML = vide);
     return;
   }
 
@@ -187,6 +214,8 @@ function afficher() {
     kpi(rows.length, "Avis sur la période (" + nbAuj + " aujourd'hui)") +
     kpi(esc(best[0]) + " " + f1(best[1]), "Point fort") +
     kpi(esc(worst[0]) + " " + f1(worst[1]), "À surveiller");
+
+  tranchesEtGrille(rows);
 
   // Par critère
   $("c-criteres").innerHTML = crit.map(([nom, v]) => barre(nom, v, rows.length)).join("");
@@ -218,6 +247,44 @@ function afficher() {
       return `<tr><td>${j.slice(0, 3)}. ${esc(h)} ${esc(c)}</td><td>${g.length}</td>${cell(moyGlobale(g))}` +
         CRITERES.map(([, i]) => cell(moyenne(g, i))).join("") + "</tr>";
     }).join("") + "</table>";
+}
+
+function tranchesEtGrille(rows) {
+  // 1) Cartes par moment de la journée
+  const donnees = TRANCHES.map(([nom, plage, test]) => {
+    const g = rows.filter((v) => test(v[2]));
+    return { nom, plage, g, m: g.length ? moyGlobale(g) : null };
+  });
+  const fiables = donnees.filter((d) => d.g.length >= MIN_AVIS);
+  const best = fiables.length > 1 ? fiables.reduce((a, b) => (b.m > a.m ? b : a)) : null;
+  const worst = fiables.length > 1 ? fiables.reduce((a, b) => (b.m < a.m ? b : a)) : null;
+  $("c-tranches").innerHTML = donnees.map((d) => {
+    if (!d.g.length) return `<div class="tr"><div class="nm">${d.nom}</div><div class="hr">${d.plage}</div><div class="weak">Pas encore d'avis.</div></div>`;
+    const cr = CRITERES.map(([nom, i]) => [nom, moyenne(d.g, i)]);
+    const faible = cr.slice().sort((a, b) => a[1] - b[1])[0];
+    const low = d.g.length < MIN_AVIS;
+    const cls = d === best && d !== worst ? " best" : d === worst && d !== best ? " worst" : "";
+    const badge = cls === " best" ? '<span class="badge b">Mieux noté</span>' : cls === " worst" ? '<span class="badge w">À améliorer</span>' : "";
+    const chips = cr.map(([nom, v]) => `<div class="chip" style="background:${low ? "#eee" : couleurNote(v)}"><span>${esc(nom.replace("Accueil et présence", "Accueil").replace("Cadre et organisation", "Cadre"))}</span><b>${f1(v)}</b></div>`).join("");
+    return `<div class="tr${cls}"><div class="nm">${d.nom}${badge}</div><div class="hr">${d.plage}</div>` +
+      `<div class="big" style="${low ? "color:#8b909b" : ""}">${f1(d.m)} <small>/ 5 · ${d.g.length} avis</small></div>` +
+      `<div class="chips">${chips}</div>` +
+      `<div class="weak">${low ? "Peu d'avis, à prendre avec prudence." : "Point faible : " + esc(faible[0]) + " " + f1(faible[1])}</div></div>`;
+  }).join("");
+
+  // 2) Grille jour x heure
+  const heures = [...new Set(rows.map((v) => v[2]))].sort();
+  const jours = JOURS.filter((j) => rows.some((v) => v[1] === j));
+  const gcell = groupe(rows, (v) => v[1] + "|" + v[2]);
+  $("c-grille").innerHTML = '<table class="heat"><tr><th>Heure</th>' + jours.map((j) => `<th>${j[0].toUpperCase() + j.slice(1, 3)}.</th>`).join("") + "</tr>" +
+    heures.map((h) => "<tr><td><b>" + esc(h) + "</b></td>" + jours.map((j) => {
+      const g = gcell[j + "|" + h];
+      if (!g) return '<td class="c" style="color:#c4c6cc">·</td>';
+      const cours = [...new Set(g.map((v) => v[3]))].join(" / ");
+      const low = g.length < MIN_AVIS;
+      return `<td class="c" style="background:${low ? "#eee" : couleurNote(moyGlobale(g))}" title="${esc(cours)} : ${f1(moyGlobale(g))} sur ${g.length} avis"><span class="cv">${f1(moyGlobale(g))} <small>(${g.length})</small></span><span class="cn">${esc(cours)}</span></td>`;
+    }).join("") + "</tr>").join("") + "</table>" +
+    '<p class="muted">Case grise : moins de 3 avis. Le point (·) indique un créneau sans avis sur la période.</p>';
 }
 
 function kpi(v, l) { return `<div class="kpi"><div class="v" style="${String(v).length > 14 ? "font-size:1.15rem" : ""}">${v}</div><div class="l">${l}</div></div>`; }
