@@ -19,12 +19,13 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 640px; margin: 0 auto; padding: 24px 18px 48px; }
-  h1 { font-size: 1.6rem; margin: 8px 0 4px; letter-spacing: .2px; }
-  .intro { color: var(--muted); margin: 0 0 24px; line-height: 1.45; }
+  html { font-size: clamp(16px, 2.3vw, 30px); } /* tout grandit avec la largeur de l'écran (tablette) */
+  main { max-width: 40rem; margin: 0 auto; padding: 24px 18px 48px; }
+  h1 { font-size: 1.8rem; margin: 8px 0 4px; letter-spacing: .2px; }
+  .intro { color: var(--muted); margin: 0 0 24px; line-height: 1.45; font-size: 1.12rem; }
   .anon { display: inline-block; font-size: .85rem; color: var(--accent);
     background: var(--accent-soft); padding: 4px 10px; border-radius: 99px; margin-bottom: 10px; }
-    .note-contenu { margin: -12px 0 24px; font-size: .92rem; border-left: 3px solid var(--accent); padding-left: 12px; }
+  .note-contenu { margin: -12px 0 24px; font-size: 1.02rem; border-left: 3px solid var(--accent); padding-left: 12px; }
   .note-contenu strong { color: var(--text); }
   section.block { background: var(--card); border: 1px solid var(--line);
     border-radius: 16px; padding: 18px; margin-bottom: 14px; }
@@ -33,7 +34,7 @@
   .slots { display: flex; flex-wrap: wrap; gap: 8px; }
   .slot { appearance: none; border: 1px solid var(--line); background: transparent;
     color: var(--text); padding: 12px 18px; border-radius: 12px; font-size: 1.05rem; cursor: pointer; }
-  .slot { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 96px; }
+  .slot { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 6rem; }
   .slot .t { font-size: 1.15rem; font-weight: 700; }
   .slot .n { font-size: .8rem; color: var(--muted); }
   .slot[aria-pressed="true"] .n { color: #fff; }
@@ -64,7 +65,7 @@
     align-items: center; justify-content: center; padding: 20px; z-index: 10; }
   #confirm.open { display: flex; }
   #confirm .box { background: var(--card); border: 1px solid var(--line); border-radius: 18px;
-    padding: 26px 22px; max-width: 380px; width: 100%; text-align: center; }
+    padding: 26px 22px; max-width: 24rem; width: 100%; text-align: center; }
   #confirm .big { font-size: 2.6rem; font-weight: 800; color: var(--accent); margin: 6px 0 10px; }
   #confirm .cn { font-size: 1.5rem; margin-top: 2px; }
   #confirm p { margin: 0; color: var(--muted); line-height: 1.4; }
@@ -99,7 +100,8 @@
     <span class="anon">🔒 100 % anonyme</span>
     <h1>Ton avis sur le cours</h1>
     <p class="intro">Ça prend 15 secondes. Dis-nous comment tu as vécu ton cours, pour qu'on améliore le service qu'on te propose.</p>
-    <p class="intro note-contenu"><strong>Pas besoin de juger le contenu de la séance</strong> : « trop de burpees » ou « pas assez de muscle ups », ça ne nous aide pas ici. On te demande seulement l'accueil, le coaching, l'ambiance et l'organisation.</p>
+    <p class="intro note-contenu"><strong>Pas besoin de juger le contenu de la séance</strong> : « trop de burpees » ou « pas assez de muscle ups », ça ne nous aide pas ici. On te demande seulement l'accueil, le coaching, l'ambiance, le cadre et l'organisation.</p>
+
     <section class="block">
       <h2>Quel cours viens-tu de faire ?</h2>
       <p class="sub">Choisis le cours que tu as fait <strong>aujourd'hui</strong>. Les avis ne portent que sur les cours du jour, pas sur ceux de la veille.</p>
